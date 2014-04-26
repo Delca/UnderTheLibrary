@@ -3,8 +3,9 @@ var game = new Phaser.Game(640, 480, Phaser.AUTO, null, null, null, null, false)
 var main_state = {preload: preload, create: create, update: update};
 
 function preload() {
-game.load.spritesheet('playerSprite', 'assets/runner.png', 18, 18);
+game.load.spritesheet('playerSprite', 'assets/runner.png', 24, 42);
 game.load.spritesheet('blockToggle', 'assets/blockToggle.png', 32, 32);
+game.load.spritesheet('dialogBox', 'assets/dialogBox.png', 574, 107);
 
 game.load.tilemap('start', 'map/start.json', null, Phaser.Tilemap.TILED_JSON);
 game.load.image('tiles', 'assets/tiles.png');
@@ -29,6 +30,7 @@ var playerSolid = [];
 // Texts for the dialog box
 var speakerText; // to print the name of the speaker
 var dialogText; // to print the dialog text itself
+var dialogBoxSprite;
 
 function create() {
 game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -59,8 +61,11 @@ player.body.maxVelocity.y = 460;
 
 cursors = game.input.keyboard.createCursorKeys();
 
-speakerText = game.add.bitmapText(50, 360, 'font', '');
-dialogText = game.add.bitmapText(50, 390, 'font', '');
+dialogBoxSprite = game.add.sprite(30, 360 + 150, 'dialogBox');
+speakerText = game.add.bitmapText(60, 360, 'font', '');
+dialogText = game.add.bitmapText(54, 390, 'font', '');
+
+dialogBoxSprite.fixedToCamera = true;
 
 };
 
@@ -158,7 +163,7 @@ function playerAI(player) {
 
 function setLadderState() {
 var x = player.body.x;
-var tile = getTile(getTileXY(player));
+var tile = getTile(getTileXY(new Phaser.Point(player.x, player.y + player.height/2)));
 
 if (tile.index != ladderIndex) {
 player.ladderState = false;

@@ -4,9 +4,11 @@ function textUpdate(phaserText) {
 var line = dialogBox.currDialog[dialogBox.currLine];
 
 if (dialogBox.currInd <= line.text.length) {
-phaserText.setText(line.text.substr(0, dialogBox.currInd));
+phaserText.setText(line.text.substr(0, dialogBox.currInd) + '_');
 }
 else {
+
+phaserText.setText(line.text.substr(0, dialogBox.currInd-1));
 
 game.input.keyboard.onUpCallback = function(e){
 if (e.keyCode == Phaser.Keyboard.ENTER){
@@ -38,15 +40,20 @@ else {
 phaserText.setText('');
 speakerText.setText('');
 player.inDialog = false;
+game.add.tween(dialogBoxSprite.cameraOffset).to({y: 360 + 150}, 500, Phaser.Easing.Linear.None, true);
 }
 
 }
 
 function startDialog(dialogName) {
-dialogBox.currLine = -1;
-dialogBox.currDialog = Dialog[dialogName];
-nextLine(dialogText);
-player.inDialog = true;
+	player.inDialog = true;
+	var tween = game.add.tween(dialogBoxSprite.cameraOffset).to({y: 360}, 500, Phaser.Easing.Linear.None, true).onComplete.add(function(){
+
+		dialogBox.currLine = -1;
+		dialogBox.currDialog = Dialog[dialogName];
+		nextLine(dialogText);
+
+	});
 }
 
 // Global variables
@@ -64,13 +71,19 @@ this.text = text;
 
 function Dialog(){}
 
-Dialog.intro = [
+Dialog.intro2 = [
 new Line('PLAYER', '*CRK* *BZZ* *KRR*'),
 new Line(null, '. . .'),
 new Line(null, 'SYSTEM INITATED'),
 
 new Line('VOICE', 'Oh, it seems to work\nnow'),
 new Line(null, 'Well, we will see how it\nwill go then . . .'),
+];
+
+Dialog.intro = [
+new Line('PLAYER', '01234567890123456789012345678901\n\
+					01234567890123456789012345678901\n\
+					01234567890123456789012345678901'),
 ];
 
 
