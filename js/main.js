@@ -5,7 +5,7 @@ var main_state = {preload: preload, create: create, update: update};
 function preload() {
 game.load.spritesheet('playerSprite', 'assets/runner.png', 24, 42);
 game.load.spritesheet('blockToggle', 'assets/blockToggle.png', 32, 32);
-game.load.spritesheet('dialogBox', 'assets/dialogBox.png', 574, 107);
+game.load.spritesheet('dialogbox', 'assets/dialogBox.png', 574, 107);
 
 game.load.tilemap('start', 'map/start.json', null, Phaser.Tilemap.TILED_JSON);
 game.load.image('tiles', 'assets/tiles.png');
