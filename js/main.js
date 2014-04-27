@@ -1,97 +1,40 @@
-var game = new Phaser.Game(640, 480, Phaser.AUTO, null, null, null, null, false);
+var game = new Phaser.Game(640, 480, Phaser.AUTO, "gameScreen", null, null, null, false);
 
-var main_state = {preload: preload, create: create, update: update};
+var main_state = {preload: null, create: create, update: update};
+var title_state = {preload: preload, create:createTitle, update:updateTitle};
+var credits_state = {preload: null, create:createCredits, update:updateCredits};
+
+var GAME_END = 0;
 
 function preload() {
+game.load.bitmapFont('font', 'font/font_0.png', 'font/font.fnt', null, null, -4);
+
 game.load.spritesheet('playerSprite', 'assets/player.png', 24, 42);
 game.load.spritesheet('blockToggle', 'assets/blockToggle.png', 32, 32);
 game.load.spritesheet('dialogBox', 'assets/dialogbox.png', 574, 107);
 game.load.spritesheet('rat', 'assets/rat.png', 42, 20);
 game.load.spritesheet('spider', 'assets/spider.png', 34, 34);
+game.load.spritesheet('button', 'assets/button.png', 32, 32);
 
-game.load.tilemap(mapName, 'map/' + mapName + '.json', null, Phaser.Tilemap.TILED_JSON);
+game.load.tilemap('cellar', 'map/' + 'cellar' + '.json', null, Phaser.Tilemap.TILED_JSON);
+game.load.tilemap('cave', 'map/' + 'cave' + '.json', null, Phaser.Tilemap.TILED_JSON);
+game.load.tilemap('well', 'map/' + 'well' + '.json', null, Phaser.Tilemap.TILED_JSON);
+
+
 game.load.image('tiles', 'assets/tiles.png');
 
-game.load.bitmapFont('font', 'font/font_0.png', 'font/font.fnt', null, null, -4);
-
 game.load.audio('sfx', ['audio/mix.mp3']);
+
+game.load.image('title', 'assets/titlescreen.png');
+game.load.image('epilogue1', 'assets/epilogue1.png');
+game.load.image('epilogue2', 'assets/epilogue2.png');
+game.load.image('epilogue3', 'assets/epilogue3.png');
+game.load.image('epilogue4', 'assets/epilogue4.png');
 };
 
-var mapName = 'cellar';
-var player;
-var map;
-var layer;
-var cursors;
-var playerSpawn = new Phaser.Point(128, 92);
-var sfx;
-var bgm;
-var soundActivated = true;
-
-// Container Groups
-var entitiesNeutral;
-var entitiesEnemy;
-var entitiesArea;
-
-// Functional arrays (contains sprites grouped by functionnality)
-var playerSolid = [];
-
-// Texts for the dialog box
-var speakerText; // to print the name of the speaker
-var dialogText; // to print the dialog text itself
-var dialogBoxSprite;
-
-function create() {
-game.physics.startSystem(Phaser.Physics.ARCADE);
-game.physics.arcade.gravity.y = 850;
-
-map = game.add.tilemap(mapName);
-map.addTilesetImage('tiles', 'tiles');
-map.setCollision([1]);
-layer = [];
-layer[0] = map.createLayer('collision');
-layer[0].resizeWorld();
-layer[0].visible = false;
-layer[0].debug= true;
-layer[1] = map.createLayer('background');
-layer[1].resizeWorld();
-layer[1].debug= true;
-layer[2] = map.createLayer('middleground');
-layer[2].resizeWorld();
-layer[2].debug= true;
-layer[3] = map.createLayer('foreground');
-layer[3].resizeWorld();
-layer[3].debug= true;
-map.setTileIndexCallback(ladderIndex, setLadderState, this, layer[0]);
-map.setTileIndexCallback(spikesIndex, killPlayer, this, layer[0]);
-
-entitiesNeutral = game.add.group();
-entitiesEnemy = game.add.group();
-entitiesArea = game.add.group();
-generateEntities(mapName);
-
-spawnPlayer(playerSpawn);
-player.anchor.setTo(.5, .5);
-player.animations.add();
-game.camera.follow(player);
-game.physics.arcade.enable(player, Phaser.Physics.ARCADE);
-player.body.collideWorldBounds = true;
-player.body.maxVelocity.x = 230;
-player.body.maxVelocity.y = 460;
-player.animations.add('idle', [0], 10, true);
-player.animations.add('walk', [1, 2, 1, 0], 10);
-player.animations.add('jump', [3, 4], 10);
-player.animations.add('fall', [4, 3], 13);
-
-cursors = game.input.keyboard.createCursorKeys();
-
-dialogBoxSprite = game.add.sprite(30, 360 + 150, 'dialogBox');
-speakerText = game.add.bitmapText(60, 360, 'font', '');
-dialogText = game.add.bitmapText(54, 390, 'font', '');
-
-dialogBoxSprite.fixedToCamera = true;
-speakerText.fixedToCamera = true;
-dialogText.fixedToCamera = true;
-
+function createTitle() {
+fade(null, false);
+if (sfx === undefined) {
 var now = Date.now();
 sfx = game.add.audio('sfx');
 sfx.lastPlayed = [];
@@ -109,28 +52,182 @@ sfx.lastPlayed['ratAttack'] = 0;
 sfx.lastPlayed['ratIdle'] = 0;
 sfx.lastPlayed['step'] = 0;
 sfx.lastPlayed['typewriter'] = 0;
+}
 
+if (bgm === undefined) {
 bgm = game.add.audio('sfx');
-bgm.addMarker('mainTheme', 7, 25.7);
-bgm.addMarker('tension', 33, 60.1);
+bgm.addMarker('mainTheme', 7, 25.7, 1, false);
+bgm.addMarker('tension', 33, 60.1, 1, true);
+}
+bgm.stop();
+bgm.play('mainTheme', null, 1, true);
+enterKey = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
+titleBackground = game.add.sprite(0, 0, 'title');
 
-bgm.play('tension', null, 1, true);
+
+
+dialogBoxSprite = game.add.sprite(30, 360 + 150, 'dialogBox');
+speakerText = game.add.bitmapText(60, 360, 'font', '');
+dialogText = game.add.bitmapText(54, 390, 'font', '');
+
+dialogBoxSprite.fixedToCamera = true;
+speakerText.fixedToCamera = true;
+dialogText.fixedToCamera = true;
+//startDialog('credits');
+
+
+
+game.input.keyboard.onUpCallback = function(e){
+if (e.keyCode == Phaser.Keyboard.ENTER ||
+	e.keyCode == Phaser.Keyboard.UP ||
+	e.keyCode == Phaser.Keyboard.DOWN ||
+	e.keyCode == Phaser.Keyboard.LEFT ||
+	e.keyCode == Phaser.Keyboard.RIGHT){
+fade(function(){bgm.stop();bgm.play('tension');game.state.start('main');});
+game.input.keyboard.onUpCallback = null;
+}
+};
+
+}
+
+function updateTitle() {}
+
+function createCredits() {
+	fade(null, false);
+	bgm.stop();
+	dialogBoxSprite = game.add.sprite(30, 360 + 150, 'dialogBox');
+	speakerText = game.add.bitmapText(60, 360, 'font', '');
+	dialogText = game.add.bitmapText(54, 390, 'font', '');
+
+	dialogBoxSprite.fixedToCamera = true;
+	speakerText.fixedToCamera = true;
+	dialogText.fixedToCamera = true;
+	startDialog('credits');
+	GAME_END = 0;
+	mapName = 'cellar';
+}
+
+function updateCredits() {
+	if (GAME_END > 0 && enterKey.isDown){
+		fade(function(){game.state.start('title');});
+	}
+}
+
+game.state.add('title', title_state);
+game.state.add('credits', credits_state);
+game.state.add('main', main_state);
+game.state.start('title');
+
+var mapName = 'cellar';
+var player;
+var map;
+var layer;
+var cursors;
+var playerSpawn = new Phaser.Point(128, 92);
+var checkPointSpawn = new Phaser.Point(-1, -1);;
+var sfx;
+var bgm;
+var soundActivated = true;
+var titleBackground;
+var enterKey;
+var zGroup;
+
+// Container Groups
+var entitiesNeutral;
+var entitiesEnemy;
+var entitiesArea;
+
+// Functional arrays (contains sprites grouped by functionnality)
+var playerSolid = [];
+
+// Texts for the dialog box
+var speakerText; // to print the name of the speaker
+var dialogText; // to print the dialog text itself
+var dialogBoxSprite;
+
+// Constants
+var ladderIndex = 2;
+var spikesIndex = 3;
+
+function create() {
+gameVar = [];
+map = game.add.tilemap(mapName);
+map.addTilesetImage('tiles', 'tiles');
+map.setCollision([1]);
+layer = [];
+layer[0] = map.createLayer('collision');
+layer[0].resizeWorld();
+layer[0].visible = false;
+layer[0].debug= true;
+layer[1] = map.createLayer('background');
+layer[1].resizeWorld();
+layer[1].alpha = 1;
+layer[1].debug= true;
+layer[2] = map.createLayer('middleground');
+layer[2].resizeWorld();
+layer[2].debug= true;
+layer[2].alpha = 1;
+layer[3] = map.createLayer('foreground');
+layer[3].resizeWorld();
+layer[3].debug= true;
+layer[3].alpha = 1;
+map.setTileIndexCallback(ladderIndex, setLadderState, this, layer[0]);
+map.setTileIndexCallback(spikesIndex, killPlayer, this, layer[0]);
+
+entitiesNeutral = game.add.group();
+entitiesEnemy = game.add.group();
+entitiesArea = game.add.group();
+zGroup = game.add.group();
+
+cursors = game.input.keyboard.createCursorKeys();
+
+dialogBoxSprite = game.add.sprite(30, 360 + 150, 'dialogBox');
+speakerText = game.add.bitmapText(60, 360, 'font', '');
+dialogText = game.add.bitmapText(54, 390, 'font', '');
+
+dialogBoxSprite.fixedToCamera = true;
+speakerText.fixedToCamera = true;
+dialogText.fixedToCamera = true;
+
+if (checkPointSpawn.x > -1) {
+	game.camera.focusOn(checkPointSpawn.x, checkPointSpawn.y);
+}
+else {
+	game.camera.focusOn(playerSpawn.x, playerSpawn.y);
+}
+
+
+fade(function(){
+
+game.physics.startSystem(Phaser.Physics.ARCADE);
+game.physics.arcade.gravity.y = 850;
+generateEntities(mapName);
+spawnPlayer(playerSpawn);
+
+
+}, false);
 };
 
 function update() {
+if (player !== undefined && player.alive && game.physics.arcade != null) {
+player.allowGravity = true;
 game.physics.arcade.collide(entitiesEnemy, layer);
 playerAI(player);
-game.debug.body(player);
+// game.debug.body(player);
 entitiesNeutral.forEach(neutralIA);
 entitiesEnemy.forEachAlive(enemyIA);
-entitiesArea.forEachAlive(function(e) {game.debug.spriteBounds(e);});
+// entitiesArea.forEachAlive(function(e) {game.debug.spriteBounds(e);});
+}
 };
 
 function playerAI(player) {
 	player.ladderState = false;
 	game.physics.arcade.collide(player, layer);
-
-	if (player.inDialog) return;
+	
+	// Collision with event areas
+	game.physics.arcade.collide(player, entitiesArea, null, processEvent);
+	
+	if (player.inDialog || !player.alive) return;
 	
 	forEach(playerSolid, function(entity){game.physics.arcade.collide(player, entity);})
 	
@@ -143,8 +240,8 @@ function playerAI(player) {
 	if (cursors.up.isDown) {
 
 		// Jump from the ground
-		if (player.body.blocked.down || player.body.touching.down) {console.log('jump');
-			player.body.velocity.y = -330;
+		if ((player.body.blocked.down || player.body.touching.down) && mapName!='well') {
+			player.body.velocity.y = -350;
 			playSound('groundImpact');
 		}
 
@@ -209,22 +306,27 @@ function playerAI(player) {
 	// Collisions with other entities
 	game.physics.arcade.collide(player, entitiesEnemy, null, killPlayer);
 
-	// Collision with event areas
-	game.physics.arcade.collide(player, entitiesArea, null, processEvent);
-	
 	// Animations
-	if (player.body.velocity.y > 0){
-		player.animations.play('jump');
-	}
-	else if (player.body.velocity.y < 0) {
-		player.animations.play('fall');
+	
+	if (player.ladderState) {
+		if (player.body.velocity.x != 0 || player.body.velocity.y != 0){
+			player.animations.play('climb');
+		}
 	}
 	else {
-		if (player.body.velocity.x != 0) {
-			player.animations.play('walk');
+		if (player.body.velocity.y > 0){
+			player.animations.play('jump');
+		}
+		else if (player.body.velocity.y < 0) {
+			player.animations.play('fall');
 		}
 		else {
-			player.animations.play('idle');
+			if (player.body.velocity.x != 0) {
+				player.animations.play('walk');
+			}
+			else {
+				player.animations.play('idle');
+			}
 		}
 	}
 	
@@ -242,7 +344,6 @@ return;
 }
 
 // var distanceFromTileCenter = x + player.body.width/2 - (Math.floor(x/map.tileWidth)*map.tileWidth + map.tileWidth/2);
-// console.log(distanceFromTileCenter);
 // player.ladderState = Math.abs(distanceFromTileCenter) < 24;
 player.ladderState = true;
 player.ladderState &= !player.body.blocked.down;
@@ -258,14 +359,37 @@ return map.getTile(point.x, point.y, layer[0]);
 }
 
 function spawnPlayer(point) {
-if (player === undefined) {
-player = game.add.sprite(128, 92, 'playerSprite');
+if (player !== undefined) {
+player.destroy();
 }
-player.reset(point.x, point.y);
+
+if (checkPointSpawn.x >= 0) {
+point = checkPointSpawn;
+}
+
+player = game.add.sprite(point.x, point.y, 'playerSprite');
+zGroup.add(player);
+game.camera.follow(player);
+game.physics.arcade.enable(player, Phaser.Physics.ARCADE);
+player.body.collideWorldBounds = true;
+player.body.maxVelocity.x = 230;
+player.body.maxVelocity.y = 460;
+player.anchor.setTo(.5, .5);
+player.animations.add('idle', [0], 10, true);
+player.animations.add('walk', [1, 2, 1, 0], 10);
+player.animations.add('jump', [3, 4], 10);
+player.animations.add('fall', [4, 3], 13);
+player.animations.add('climb', [5, 6], 6);
+player.inDialog = false;
+
+player.allowGravity = false;
 }
 
 function killPlayer() {
-spawnPlayer(playerSpawn);
+player.body.velocity.x = 0;
+player.body.velocity.y = 0;
+player.destroy();
+fade(function(){game.physics.destroy();game.state.restart();});
 return false;
 }
 
@@ -284,8 +408,23 @@ sfx.play(name, null, 0.05*(name=='typewriter'?0.5:1)*(soundActivated?1:0) );
 
 }
 
-var ladderIndex = 2;
-var spikesIndex = 3;
+function fade(callback, out) {
+	if (out === undefined) {
+		out = true;
+	}
 
-game.state.add('main', main_state);
-game.state.start('main');
+	var mask = game.add.graphics(0, 0);
+	mask.fixedToCamera = true;
+	mask.beginFill("black", 1);
+	mask.drawRect(0, 0, game.width, game.height);
+	mask.endFill();
+	mask.alpha = (out?0:1);
+
+	var tween = game.add.tween(mask).to({alpha:(out?1:0)}, 500, Phaser.Easing.Linear.None, true)
+						.onComplete.add(function() {
+							if (callback != null) {
+								callback();
+							}
+						}, this);
+
+}

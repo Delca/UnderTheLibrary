@@ -7,11 +7,9 @@ var layers = cachedMap.data.layers;
 
 for (var i = 0; i < layers.length; ++i) {
 var layer = layers[i];
-console.log(layer.name);
 
 if (layer.type == 'objectgroup') {
 var objects = layer.objects;
-console.log('Found an object layer with ' + objects.length + ' entities');
 
 for (var j = 0; j < objects.length; ++j) {
 	createEntity(objects[j]);
@@ -45,6 +43,14 @@ case Entity.EVENT:
 createEvent(data);
 break;
 
+case Entity.BUTTON:
+createButton(data);
+break;
+
+case Entity.EPILOGUE:
+createEpilogue(data);
+break;
+
 }
 }
 
@@ -61,6 +67,12 @@ return Entity.BLOCKTOGGLE;
 if (data.properties['event'] !== undefined) {
 return Entity.EVENT;
 }
+if (data.properties['button'] !== undefined) {
+return Entity.BUTTON;
+}
+if (data.properties['epilogue'] !== undefined) {
+return Entity.EPILOGUE;
+}
 
 }
 
@@ -70,6 +82,9 @@ if (!entity.alive) return;
 switch(entity.entityType) {
 case Entity.BLOCKTOGGLE:
 blockToggleIA(entity);
+break;
+case Entity.BUTTON:
+buttonIA(entity);
 break;
 }
 
@@ -141,7 +156,7 @@ function ratIA(rat) {
 	// Behaviour
 	rat.body.velocity.x = 0;
 
-	if (Math.abs(player.y - rat.y) < 14){
+	if (Math.abs(player.y - rat.y) < 24 && Math.abs(player.y - rat.y) < 5*map.tileWidth){
 		rat.body.velocity.x += 220 * Math.sign(player.x - rat.x);
 	}
 
@@ -213,14 +228,49 @@ function blockToggleIA(block) {
 if (block.visible && gameVar[block.inputGameVar] == 1) {
 
 block.visible = false;
+playSound('blockToggle');
 
 }
 
 if (!block.visible && gameVar[block.inputGameVar] == 0){
 block.visible = true;
+playSound('blockToggle');
 }
 
 
+}
+
+function createButton(data) {
+var coord = getTileXY(data);
+var button = entitiesNeutral.create(coord.x * map.tileWidth, coord.y * map.tileHeight, 'button');
+game.physics.arcade.enable(button, Phaser.Physics.ARCADE);
+button.body.allowGravity = false;
+button.body.collideWorldBounds = true;
+button.body.immovable = true;
+button.inputGameVar = data.properties['input'];
+button.entityType = Entity.BUTTON;
+}
+
+function buttonIA(button) {
+
+if (gameVar[button.inputGameVar] == 0) {
+button.animations.frame = 0;
+}
+
+if (gameVar[button.inputGameVar] == 1){
+button.animations.frame = 1;
+}
+
+
+}
+
+function createEpilogue(data) {
+var epilogue = entitiesNeutral.create(data.x, data.y, 'epilogue' + data.properties['epilogue']);
+game.physics.arcade.enable(epilogue, Phaser.Physics.ARCADE);
+epilogue.body.allowGravity = false;
+epilogue.body.collideWorldBounds = false;
+epilogue.body.immovable = true;
+epilogue.entityType = Entity.EPILOGUE;
 }
 
 // Events
@@ -239,15 +289,21 @@ area.parameters = data.properties['parameters'].split(';');
 area.repeat = parseInt(data.properties['repeat']) || 0;
 }
 
+function playDialog(event) {
+startDialog(event.parameters[0]);
+}
+
 function processEvent(entity, event) {
+if (event.repeat == -8) {
+event.callback(event);
+return;
+}
 if (event.repeat >= 0) {
-event.callback.apply(this, event.parameters);
+event.callback(event);
 --event.repeat;
-playSound('blockToggle');
 }
 if (event.repeat >= 0) {
 event.kill();
-playSound('blockToggle');
 }
 
 return false;
@@ -255,12 +311,59 @@ return false;
 
 // Event callbacks
 
-function setGameVar(index, value) {
-console.log('setGlobalGameVar called with args ' + index + ' ' + value);
-gameVar[index] = value;
+function setGameVar(event) {
+var parameters = event.parameters;
+gameVar[parameters[0]] = parameters[1];
+}
+
+function checkpoint(event){
+checkPointSpawn = getTileXY(event);
+checkPointSpawn.x *= map.tileWidth;
+checkPointSpawn.y *= map.tileHeight;
+}
+
+function nextLevel(event) {
+checkPointSpawn.x = -1;
+checkPointSpawn.y = -1;
+mapName = nextLevelArray[mapName];
+fade(function(){game.state.restart();});
+}
+
+function endGame(event) {
+fade(function(){game.state.start('credits');});
+}
+
+function antigravity(event) {
+player.inDialog = true;
+
+if (player.x < event.x + event.width/2) {
+	player.x += 3;
+	player.animations.play('walk');
+}
+else {
+
+if (launchTime === undefined) {
+launchTime = Date.now() + 3*1000;
+}
+
+if (launchTime < Date.now()) {
+player.body.allowGravity = false;
+player.body.velocity.y = -200;
+player.animations.play('jump');
+}
+
+}
+
 }
 
 // Constants
+
+var launchTime;
+
+var nextLevelArray = [];
+nextLevelArray['cellar'] = 'cave';
+nextLevelArray['cave'] = 'well';
+nextLevelArray['well'] = 'cellar';
 
 function Entity() {};
 
@@ -270,6 +373,8 @@ Entity.ENEMY = 2;
 Entity.DIALOG = 3;
 Entity.BLOCKTOGGLE = 4;
 Entity.EVENT = 5;
+Entity.BUTTON = 6;
+Entity.EPILOGUE = 7;
 
 function Enemy() {};
 

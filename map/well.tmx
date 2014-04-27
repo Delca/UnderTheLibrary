@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="40" height="200" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" source="tiles.tsx"/>
+ <layer name="collision" width="40" height="200" visible="0">
+  <data encoding="base64" compression="zlib">
+   eJzt2EGKxCAQQNHuC8z9j9urgSBJxxljlRbvQ+Eq8IiCJO/X6/UemLN+LtbeRjw9Rr4xI1+eb4aNbw3fLNsTvpm21ljNF2Gr6ouyVfRF2v7qi7ZV8mXYVvcd29mXbeMbs/HV8V3F938bH1+mbXdfhJGP75sv28g33zfbuLrvm7GKL8vIN2bki/NFGFf3tUa+WF+0ka+m79fIx8fHt4ovylbRF2mr5suwVfFF2yr5Mm18c30ZttV9bbv6VthbvjHblW+Vd8fHx8fHt9f9wddv5OPj4+Nbw9caV/s+5+Pj67Pd+TKMfHw7+aKNfHxn8fFl+qKMfHx8/UY+vmgjHx8fHx8fX6ytNfLx7eCLtPHxZfqOrfb/mY+Pb19fGx8fH1+WL9PGxxfpOzPu7Iu28fHx8fHxPWXkq+c7Gq98mTa+PXx37eo7NsvX290zT/pmxPe8b/aZy/KZ2vMBXmU1Yg==
+  </data>
+ </layer>
+ <layer name="background" width="40" height="200">
+  <data encoding="base64" compression="zlib">
+   eJztw0ENAAAMA6H717/fTQgkrJqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqrqP3fMV9A=
+  </data>
+ </layer>
+ <layer name="middleground" width="40" height="200">
+  <data encoding="base64" compression="zlib">
+   eJztzrEKwlAQRNHXJaWWBg1GMfn/P3R6Da8J2eYcuDCwzbYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD1nmmpfmLHJ61p+3O7p0eaT/3o15DGzq50SdfOrnRLU2dXeqV3Z8NRvp4lAwM=
+  </data>
+ </layer>
+ <layer name="foreground" width="40" height="200">
+  <data encoding="base64" compression="zlib">
+   eJzt3MlOAzEMgOE5IG4tN9oH4Ajv/3rIB6RqhCDxFtf5I/lY9ZOzTCbLXI/juCrj7YgpF4PpHK/FfRE59PRJfBX3eeewsu/F2ebt887dTr7PAJuXL6LdPYZ1nI6oV68cRufO6ovOncUX1Se8fBm50/qycqfxZdo0vqx61fiycydxn/BVzt0K30zuMp4VXXOX7dOMyfj0dZvpqz4f0OQuy9d1LorP1vYyfNZ33ffiPimROcS33hfZBr3WqiJz6LHeTB3bS1QOq/skPPaNdq5jiR36cfR8pvO6uBTmW7V9EtZ+TBu0F8YZfCvrmHUPfPjwRfjY49f7MvcLu+0nVT4fIaXyXiHnN/Rtjz3+vj7O5lC3q3zZuevU9rLH5GeoW3z48O3hi14Dt/qkVH5+4Ps9ZvaOqvcRfPjw4YvyrXgGS8zsC1bPIT583jGzxpHdh7vtK+Dr78vsIx33fPHZfVltsOuZDXx2X0YbrH4uER8+fH+H5fx99TGwuo8xGh8+fPjw4cN3LllnArV3t6qvw+Dr6+NuCj6v6PatOPoGPnw1fN3GFnz48OEbCc3Yx319fDv4JDR7b5XnVtw9x4cPHz58z+CT4H5Kb5/EyDxrxfc3ZnK4KneZvts/sdJn+Y+R92Crb+Q/zufNboO/0/p+6m32jtPsb7S+zIJPX7TvlVlF23c/ksIyrhD6+Abx0yyH
+  </data>
+ </layer>
+ <objectgroup name="objects" width="40" height="200"/>
+</map>
