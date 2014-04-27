@@ -82,14 +82,40 @@ break;
 function createEnemy(data) {
 var enemy;
 switch (parseInt(data.properties['enemy'])) {
+
 case Enemy.BASIC:
-console.log('YAY');
 enemy = entitiesEnemy.create(data.x, data.y, 'playerSprite');
 game.physics.arcade.enable(enemy, Phaser.Physics.ARCADE);
 enemy.body.collideWorldBounds = true;
 break;
-}
 
+case Enemy.RAT:
+enemy = entitiesEnemy.create(data.x, data.y, 'rat');
+game.physics.arcade.enable(enemy, Phaser.Physics.ARCADE);
+enemy.body.collideWorldBounds = true;
+
+enemy.animations.add('walk', [0, 1, 2, 3, 4], 28, true);
+enemy.animations.add('idle', [0, 5, 6, 5, 6, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 10, true);
+
+break;
+
+case Enemy.SPIDER:
+var ceilingY = Math.floor(data.y/map.tileHeight)*map.tileHeight;
+enemy = entitiesEnemy.create(data.x, ceilingY, 'spider');
+ceilingY += enemy.height/2;
+enemy.y = ceilingY;
+game.physics.arcade.enable(enemy, Phaser.Physics.ARCADE);
+enemy.body.allowGravity = false;
+enemy.body.collideWorldBounds = true;
+enemy.originalY = ceilingY;
+
+enemy.animations.add('attack', [0, 1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3, 2, 1, 0], 12, true);
+enemy.animations.add('idle', [0, 1, 2, 3, 2, 3, 2, 1, 2, 3, 2, 1, 0, 0, 0, 0, 0, 1, 2, 3, 2, 1, 0, 0, 0, 0], 5, true);
+
+break;
+
+}
+enemy.anchor.setTo(.5, .5);
 enemy.enemyType = parseInt(data.properties['enemy']);
 }
 
@@ -100,9 +126,73 @@ switch(enemy.enemyType) {
 case Enemy.BASIC:
 break;
 
+case Enemy.RAT:
+ratIA(enemy);
+break;
+
+case Enemy.SPIDER:
+spiderIA(enemy);
+break;
+
 }
 }
 
+function ratIA(rat) {
+	// Behaviour
+	rat.body.velocity.x = 0;
+
+	if (Math.abs(player.y - rat.y) < 14){
+		rat.body.velocity.x += 220 * Math.sign(player.x - rat.x);
+	}
+
+	// Animations
+	if (rat.body.velocity.x == 0){
+		rat.animations.play('idle');
+		if (Phaser.Point.distance(player.body.position, rat.body.position) < 7*map.tileWidth) {
+			playSound('ratIdle');
+		}
+	}
+	else {
+		if (rat.body.velocity.x > 0) {
+			rat.scale.x = -1;
+		}
+		if (rat.body.velocity.x < 0) {
+			rat.scale.x = 1;
+		}
+		rat.animations.play('walk');
+		
+		if (Phaser.Point.distance(player.body.position, rat.body.position) < 7*map.tileWidth) {
+		playSound('ratAttack');
+		}
+		
+	}
+
+	
+}
+
+function spiderIA(spider) {
+if (Math.abs(player.x - spider.x) < spider.width) {
+	if (spider.y < player.y) {
+		spider.body.velocity.y = 220;
+		spider.animations.play('attack');
+	}
+	else {
+	spider.body.velocity.y = 0;
+	}
+}
+else {
+	if (spider.y > spider.originalY) {
+			spider.body.velocity.y = -30;
+			spider.animations.play('attack', 7);
+		}
+		else {
+			spider.body.velocity.y = 0;
+			spider.animations.play('idle');
+		}
+}
+
+
+}
 
 // Neutral
 
@@ -153,9 +243,11 @@ function processEvent(entity, event) {
 if (event.repeat >= 0) {
 event.callback.apply(this, event.parameters);
 --event.repeat;
+playSound('blockToggle');
 }
 if (event.repeat >= 0) {
 event.kill();
+playSound('blockToggle');
 }
 
 return false;
@@ -182,4 +274,8 @@ Entity.EVENT = 5;
 function Enemy() {};
 
 Enemy.BASIC = 0;
+Enemy.RAT = 1;
+Enemy.SPIDER = 2;
+Enemy.FROG = 3;
+Enemy.COCKROACH = 4;
 

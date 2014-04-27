@@ -5,19 +5,25 @@ var main_state = {preload: preload, create: create, update: update};
 function preload() {
 game.load.spritesheet('playerSprite', 'assets/runner.png', 24, 42);
 game.load.spritesheet('blockToggle', 'assets/blockToggle.png', 32, 32);
-game.load.spritesheet('dialogbox', 'assets/dialogBox.png', 574, 107);
+game.load.spritesheet('dialogBox', 'assets/dialogbox.png', 574, 107);
+game.load.spritesheet('rat', 'assets/rat.png', 42, 20);
+game.load.spritesheet('spider', 'assets/spider.png', 34, 34);
 
-game.load.tilemap('start', 'map/start.json', null, Phaser.Tilemap.TILED_JSON);
+game.load.tilemap(mapName, 'map/' + mapName + '.json', null, Phaser.Tilemap.TILED_JSON);
 game.load.image('tiles', 'assets/tiles.png');
 
 game.load.bitmapFont('font', 'font/font_0.png', 'font/font.fnt', null, null, -4);
+
+game.load.audio('sfx', ['audio/mix.mp3']);
 };
 
+var mapName = 'cellar';
 var player;
 var map;
 var layer;
 var cursors;
 var playerSpawn = new Phaser.Point(128, 92);
+var sfx;
 
 // Container Groups
 var entitiesNeutral;
@@ -36,19 +42,29 @@ function create() {
 game.physics.startSystem(Phaser.Physics.ARCADE);
 game.physics.arcade.gravity.y = 850;
 
-map = game.add.tilemap('start');
+map = game.add.tilemap(mapName);
 map.addTilesetImage('tiles', 'tiles');
-map.setCollision([41,42,43,49,50,51,57,58,59,5,56,63,64]);
-layer = map.createLayer('layer1');
-layer.resizeWorld();
-layer.debug= true;
-map.setTileIndexCallback(ladderIndex, setLadderState, this, layer);
-map.setTileIndexCallback(spikesIndex, killPlayer, this, layer);
+map.setCollision([1]);
+layer = [];
+layer[0] = map.createLayer('collision');
+layer[0].resizeWorld();
+layer[0].debug= true;
+layer[1] = map.createLayer('background');
+layer[1].resizeWorld();
+layer[1].debug= true;
+layer[2] = map.createLayer('middleground');
+layer[2].resizeWorld();
+layer[2].debug= true;
+layer[3] = map.createLayer('foreground');
+layer[3].resizeWorld();
+layer[3].debug= true;
+map.setTileIndexCallback(ladderIndex, setLadderState, this, layer[0]);
+map.setTileIndexCallback(spikesIndex, killPlayer, this, layer[0]);
 
 entitiesNeutral = game.add.group();
 entitiesEnemy = game.add.group();
 entitiesArea = game.add.group();
-generateEntities('start');
+generateEntities(mapName);
 
 spawnPlayer(playerSpawn);
 player.anchor.setTo(.5, .5);
@@ -66,6 +82,27 @@ speakerText = game.add.bitmapText(60, 360, 'font', '');
 dialogText = game.add.bitmapText(54, 390, 'font', '');
 
 dialogBoxSprite.fixedToCamera = true;
+speakerText.fixedToCamera = true;
+dialogText.fixedToCamera = true;
+
+var now = Date.now();
+sfx = game.add.audio('sfx');
+sfx.lastPlayed = [];
+sfx.addMarker('blockToggle', 0, 0.5);
+sfx.addMarker('bookLadder', 1, 0.12);
+sfx.addMarker('groundImpact', 2, 0.07);
+sfx.addMarker('ratAttack', 3, 0.16 + 0.3);
+sfx.addMarker('ratIdle', 4, 0.14 + 0.78);
+sfx.addMarker('step', 5, 0.07 + 0.09);
+sfx.addMarker('typewriter', 6, 0.05 + 0.10);
+sfx.lastPlayed['blockToggle'] = 0;
+sfx.lastPlayed['bookLadder'] = 0;
+sfx.lastPlayed['groundImpact'] = 0;
+sfx.lastPlayed['ratAttack'] = 0;
+sfx.lastPlayed['ratIdle'] = 0;
+sfx.lastPlayed['step'] = 0;
+sfx.lastPlayed['typewriter'] = 0;
+
 
 };
 
@@ -97,6 +134,7 @@ function playerAI(player) {
 		// Jump from the ground
 		if (player.body.blocked.down || player.body.touching.down) {console.log('jump');
 			player.body.velocity.y = -330;
+			playSound('groundImpact');
 		}
 
 		// Climb a ladder
@@ -112,6 +150,7 @@ function playerAI(player) {
 		// Ground movement
 		if (player.body.blocked.down) {
 			player.body.velocity.x = -230;
+			playSound('step');
 		}
 		else { //Air movement
 			player.body.velocity.x += -12;
@@ -124,6 +163,7 @@ function playerAI(player) {
 		// Ground movement
 		if (player.body.blocked.down) {
 			player.body.velocity.x = 230;
+			playSound('step');
 		}
 		else { //Air movement
 			player.body.velocity.x += 12;
@@ -148,6 +188,10 @@ function playerAI(player) {
 			player.body.velocity.y = 0;
 		}
 
+		if (player.body.velocity.x != 0 ||player.body.velocity.y != 0) {
+			playSound('bookLadder');
+		}
+		
 	}
 
 
@@ -165,7 +209,7 @@ function setLadderState() {
 var x = player.body.x;
 var tile = getTile(getTileXY(new Phaser.Point(player.x, player.y + player.height/2)));
 
-if (tile.index != ladderIndex) {
+if (tile == null || tile.index != ladderIndex) {
 player.ladderState = false;
 return;
 }
@@ -183,7 +227,7 @@ return new Phaser.Point(Math.floor(point.x/map.tileWidth), Math.floor(point.y/ma
 
 function getTile(point) {
 // point is in tile coordinate
-return map.getTile(point.x, point.y, layer);
+return map.getTile(point.x, point.y, layer[0]);
 }
 
 function spawnPlayer(point) {
@@ -204,9 +248,17 @@ callback(array[i]);
 }
 }
 
+function playSound(name) {
+var now = Date.now();
+if (now - sfx.lastPlayed[name] > 2*sfx.markers[name].duration*1000 || name == 'typewriter') {
+sfx.lastPlayed[name] = now;
+sfx.play(name);
+};
 
-var ladderIndex = 53;
-var spikesIndex = 45;
+}
+
+var ladderIndex = 2;
+var spikesIndex = 3;
 
 game.state.add('main', main_state);
 game.state.start('main');

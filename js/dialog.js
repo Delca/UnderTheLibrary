@@ -1,5 +1,6 @@
 function textUpdate(phaserText) {
 ++dialogBox.currInd;
+playSound('typewriter');
 
 var line = dialogBox.currDialog[dialogBox.currLine];
 
@@ -7,7 +8,6 @@ if (dialogBox.currInd <= line.text.length) {
 phaserText.setText(line.text.substr(0, dialogBox.currInd) + '_');
 }
 else {
-
 phaserText.setText(line.text.substr(0, dialogBox.currInd-1));
 
 game.input.keyboard.onUpCallback = function(e){
@@ -49,6 +49,7 @@ function startDialog(dialogName) {
 	player.inDialog = true;
 	var tween = game.add.tween(dialogBoxSprite.cameraOffset).to({y: 360}, 500, Phaser.Easing.Linear.None, true).onComplete.add(function(){
 
+		player.body.velocity.x = 0;
 		dialogBox.currLine = -1;
 		dialogBox.currDialog = Dialog[dialogName];
 		nextLine(dialogText);
