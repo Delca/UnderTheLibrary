@@ -72,16 +72,16 @@ this.text = text;
 
 function Dialog(){}
 
-Dialog.intro2 = [
+Dialog.intro = [
 new Line('PLAYER', '*CRK* *BZZ* *KRR*'),
 new Line(null, '. . .'),
 new Line(null, 'SYSTEM INITATED'),
 
-new Line('VOICE', 'Oh, it seems to work\nnow'),
-new Line(null, 'Well, we will see how it\nwill go then . . .'),
+new Line(null, ''),
+new Line(null, ''),
 ];
 
-Dialog.intro = [
+Dialog.test = [
 new Line('PLAYER', '01234567890123456789012345678901\n\
 					01234567890123456789012345678901\n\
 					01234567890123456789012345678901'),

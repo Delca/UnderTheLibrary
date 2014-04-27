@@ -3,7 +3,7 @@ var game = new Phaser.Game(640, 480, Phaser.AUTO, null, null, null, null, false)
 var main_state = {preload: preload, create: create, update: update};
 
 function preload() {
-game.load.spritesheet('playerSprite', 'assets/runner.png', 24, 42);
+game.load.spritesheet('playerSprite', 'assets/player.png', 24, 42);
 game.load.spritesheet('blockToggle', 'assets/blockToggle.png', 32, 32);
 game.load.spritesheet('dialogBox', 'assets/dialogbox.png', 574, 107);
 game.load.spritesheet('rat', 'assets/rat.png', 42, 20);
@@ -24,6 +24,8 @@ var layer;
 var cursors;
 var playerSpawn = new Phaser.Point(128, 92);
 var sfx;
+var bgm;
+var soundActivated = true;
 
 // Container Groups
 var entitiesNeutral;
@@ -48,6 +50,7 @@ map.setCollision([1]);
 layer = [];
 layer[0] = map.createLayer('collision');
 layer[0].resizeWorld();
+layer[0].visible = false;
 layer[0].debug= true;
 layer[1] = map.createLayer('background');
 layer[1].resizeWorld();
@@ -74,6 +77,10 @@ game.physics.arcade.enable(player, Phaser.Physics.ARCADE);
 player.body.collideWorldBounds = true;
 player.body.maxVelocity.x = 230;
 player.body.maxVelocity.y = 460;
+player.animations.add('idle', [0], 10, true);
+player.animations.add('walk', [1, 2, 1, 0], 10);
+player.animations.add('jump', [3, 4], 10);
+player.animations.add('fall', [4, 3], 13);
 
 cursors = game.input.keyboard.createCursorKeys();
 
@@ -103,7 +110,11 @@ sfx.lastPlayed['ratIdle'] = 0;
 sfx.lastPlayed['step'] = 0;
 sfx.lastPlayed['typewriter'] = 0;
 
+bgm = game.add.audio('sfx');
+bgm.addMarker('mainTheme', 7, 25.7);
+bgm.addMarker('tension', 33, 60.1);
 
+bgm.play('tension', null, 1, true);
 };
 
 function update() {
@@ -201,6 +212,22 @@ function playerAI(player) {
 	// Collision with event areas
 	game.physics.arcade.collide(player, entitiesArea, null, processEvent);
 	
+	// Animations
+	if (player.body.velocity.y > 0){
+		player.animations.play('jump');
+	}
+	else if (player.body.velocity.y < 0) {
+		player.animations.play('fall');
+	}
+	else {
+		if (player.body.velocity.x != 0) {
+			player.animations.play('walk');
+		}
+		else {
+			player.animations.play('idle');
+		}
+	}
+	
 };
 
 // UTIL FUNCTIONS
@@ -248,11 +275,11 @@ callback(array[i]);
 }
 }
 
-function playSound(name) {
+function playSound(name, volume) {
 var now = Date.now();
 if (now - sfx.lastPlayed[name] > 2*sfx.markers[name].duration*1000 || name == 'typewriter') {
 sfx.lastPlayed[name] = now;
-sfx.play(name);
+sfx.play(name, null, 0.05*(name=='typewriter'?0.5:1)*(soundActivated?1:0) );
 };
 
 }
@@ -262,4 +289,3 @@ var spikesIndex = 3;
 
 game.state.add('main', main_state);
 game.state.start('main');
-
